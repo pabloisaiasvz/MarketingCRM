@@ -4,6 +4,7 @@ using ProjectApprovalAPI.Models;
 using ProjectApprovalAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using ProjectApprovalAPI.DTOs.ProjectApprovalAPI.DTOs;
+using ProjectApprovalAPI.Exceptions;
 
 public class ProjectService : IProjectService
 {
@@ -106,8 +107,11 @@ public class ProjectService : IProjectService
     {
         var proposal = await _context.ProjectProposals.FindAsync(id);
 
-        if (proposal == null || proposal.StatusId != 4)
-            return false;
+        if (proposal == null)
+            throw new NotFoundException("La propuesta no fue encontrada.");
+
+        if (proposal.StatusId != 4)
+            throw new BusinessException("Solo se pueden editar propuestas con estado 'Observed'.");
 
         proposal.Title = dto.Title;
         proposal.Description = dto.Description;
@@ -120,6 +124,7 @@ public class ProjectService : IProjectService
         return true;
     }
 
+
     private async Task UpdateProposalStatusAsync(Guid projectId)
     {
         var steps = await _context.ProjectApprovalSteps
@@ -127,7 +132,8 @@ public class ProjectService : IProjectService
             .ToListAsync();
 
         var proposal = await _context.ProjectProposals.FindAsync(projectId);
-        if (proposal == null) return;
+        if (proposal == null)
+            throw new NotFoundException("Proyecto no encontrado.");
 
         if (steps.All(s => s.StatusId == 2))
             proposal.StatusId = 2;
@@ -137,6 +143,8 @@ public class ProjectService : IProjectService
             proposal.StatusId = 4;
         else
             proposal.StatusId = 1;
+
+        await _context.SaveChangesAsync();
     }
 
 
@@ -371,7 +379,7 @@ public class ProjectService : IProjectService
             .FirstOrDefaultAsync(p => p.Id == projectId);
 
         if (project == null)
-            throw new Exception("Proyecto no encontrado");
+            throw new KeyNotFoundException("Proyecto no encontrado");
 
         var dto = new EditProjectOptionsDto
         {
@@ -438,7 +446,7 @@ public class ProjectService : IProjectService
     {
         return await _context.Users
             .Include(u => u.Role)
-            .Select(u => new UserDto
+            .Select(static u => new UserDto
             {
                 Id = u.Id,
                 Name = u.Name,

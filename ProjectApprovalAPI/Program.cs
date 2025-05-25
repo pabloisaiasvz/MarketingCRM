@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using ProjectApprovalAPI.Data;
-using ProjectApprovalAPI.Services;
+using ProjectApprovalAPI.Common;
+using ProjectApprovalAPI.Data; 
 using ProjectApprovalAPI.Services.Interfaces;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,8 @@ builder.Services.AddDbContext<ProjectApprovalDbContext>(options =>
 builder.Services.AddScoped<IProjectService, ProjectService>();
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
