@@ -1,91 +1,89 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using MarketingCRM.Data;
-using MarketingCRM.Models;
+using ProjectApprovalSystem.Data;
+using ProjectApprovalSystem.Models;
 using System.Collections.Generic;
 
-namespace MarketingCRM.Utils
+namespace ProjectApprovalSystem.Utils
 {
     public static class ProjectApprovalUtils
     {
         public static void CreateProjectProposal(ProjectApprovalDbContext context, string title, string description, decimal estimatedAmount, int duration, int areaId, int projectTypeId, int userId)
         {
-            var pendingStatus = context.ApprovalStatuses.FirstOrDefault(s => s.Name == "Pending");
-            if (pendingStatus == null)
-            {
-                Console.WriteLine("Error: No se encontró el estado 'Pending'.");
-                return;
-            }
-
-            var area = context.Areas.FirstOrDefault(a => a.Id == areaId);
-            var projectType = context.ProjectTypes.FirstOrDefault(t => t.Id == projectTypeId);
-
-            if (area == null || projectType == null)
-            {
-                Console.WriteLine("Error: Área o tipo de proyecto no válidos.");
-                return;
-            }
-
-            var projectProposal = new ProjectProposal
-            {
-                Title = title,
-                Description = description,
-                EstimatedAmount = estimatedAmount,
-                EstimatedDuration = duration,
-                AreaId = areaId,
-                TypeId = projectTypeId,
-                Status = pendingStatus,
-                StatusId = pendingStatus.Id,
-                Area = area,
-                Type = projectType,
-                CreateAt = DateTime.Now,
-                CreateById = userId
-            };
+            using var transaction = context.Database.BeginTransaction();
 
             try
             {
+                var pendingStatus = context.ApprovalStatuses.FirstOrDefault(s => s.Name == "Pending");
+                if (pendingStatus == null)
+                {
+                    Console.WriteLine("Error: No se encontró el estado 'Pending'.");
+                    return;
+                }
+
+                var area = context.Areas.FirstOrDefault(a => a.Id == areaId);
+                var projectType = context.ProjectTypes.FirstOrDefault(t => t.Id == projectTypeId);
+
+                if (area == null || projectType == null)
+                {
+                    Console.WriteLine("Error: Área o tipo de proyecto no válidos.");
+                    return;
+                }
+
+                var projectProposal = new ProjectProposal
+                {
+                    Title = title,
+                    Description = description,
+                    EstimatedAmount = estimatedAmount,
+                    EstimatedDuration = duration,
+                    AreaId = areaId,
+                    TypeId = projectTypeId,
+                    Status = pendingStatus,
+                    StatusId = pendingStatus.Id,
+                    Area = area,
+                    Type = projectType,
+                    CreateAt = DateTime.Now,
+                    CreateById = userId
+                };
+
                 context.ProjectProposals.Add(projectProposal);
                 context.SaveChanges();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al guardar la propuesta: {ex.Message}");
-                return;
-            }
 
-            var rules = GetApprovalRules(context, estimatedAmount, areaId, projectTypeId).ToList();
+                var rules = GetApprovalRules(context, estimatedAmount, areaId, projectTypeId).ToList();
 
-            if (!rules.Any())
-            {
-                Console.WriteLine("Advertencia: No se encontraron reglas de aprobación aplicables para este proyecto.");
-                return;
-            }
-
-            foreach (var rule in rules)
-            {
-                var step = new ProjectApprovalStep
+                if (!rules.Any())
                 {
-                    ProjectProposalId = projectProposal.Id,
-                    ProjectProposal = projectProposal,
-                    ApproverRoleId = rule.ApproverRoleId,
-                    StatusId = pendingStatus.Id,
-                    Status = pendingStatus,
-                    StepOrder = rule.StepOrder,
-                    ApproverRole = context.ApproverRoles.FirstOrDefault(r => r.Id == rule.ApproverRoleId)
-                };
-                context.ProjectApprovalSteps.Add(step);
-            }
+                    Console.WriteLine("Advertencia: No se encontraron reglas de aprobación aplicables para este proyecto.");
+                    transaction.Rollback();
+                    return;
+                }
 
-            try
-            {
+                foreach (var rule in rules)
+                {
+                    var step = new ProjectApprovalStep
+                    {
+                        ProjectProposalId = projectProposal.Id,
+                        ProjectProposal = projectProposal,
+                        ApproverRoleId = rule.ApproverRoleId,
+                        StatusId = pendingStatus.Id,
+                        Status = pendingStatus,
+                        StepOrder = rule.StepOrder,
+                        ApproverRole = context.ApproverRoles.FirstOrDefault(r => r.Id == rule.ApproverRoleId)
+                    };
+                    context.ProjectApprovalSteps.Add(step);
+                }
+
                 context.SaveChanges();
+                transaction.Commit();
+
                 Console.WriteLine("Propuesta de proyecto y pasos de aprobación creados con éxito!");
                 Console.WriteLine($"ID del proyecto: {projectProposal.Id}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al guardar los pasos de aprobación: {ex.Message}");
+                transaction.Rollback();
+                Console.WriteLine($"Error durante la creación transaccional: {ex.Message}");
             }
         }
 
@@ -147,7 +145,7 @@ namespace MarketingCRM.Utils
             Console.WriteLine("--------------------------------------");
         }
 
-        public static void ProcessApproval(ProjectApprovalDbContext context, Guid projectId, bool isApproved, int stepOrder, int userId)
+        public static void ProcessApproval(ProjectApprovalDbContext context, Guid projectId, bool isApproved, int stepOrder, int userId, string? observations = null)
         {
             var projectProposal = context.ProjectProposals
                 .Include(p => p.Status)
@@ -179,6 +177,7 @@ namespace MarketingCRM.Utils
             }
 
             currentStep.ApproverUserId = userId;
+            currentStep.Observations = observations;
 
             if (isApproved)
             {

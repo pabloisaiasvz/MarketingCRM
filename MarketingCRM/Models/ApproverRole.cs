@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MarketingCRM.Models
+namespace ProjectApprovalSystem.Models
 {
     public class ApproverRole
     {

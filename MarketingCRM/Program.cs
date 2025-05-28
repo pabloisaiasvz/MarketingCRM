@@ -1,11 +1,11 @@
-﻿using MarketingCRM.Data;
-using MarketingCRM.ConsoleUI;
+﻿using ProjectApprovalSystem.Data;
+using ProjectApprovalSystem.ConsoleUI;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
 
-namespace MarketingCRM
+namespace ProjectApprovalSystem
 {
     class Program
     {

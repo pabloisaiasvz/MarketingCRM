@@ -1,11 +1,11 @@
-﻿using MarketingCRM.Data;
-using MarketingCRM.Models;
-using MarketingCRM.Utils;
+﻿using ProjectApprovalSystem.Data;
+using ProjectApprovalSystem.Models;
+using ProjectApprovalSystem.Utils;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 
-namespace MarketingCRM.ConsoleUI
+namespace ProjectApprovalSystem.ConsoleUI
 {
     public class ProjectApprovalManager
     {
@@ -350,12 +350,14 @@ namespace MarketingCRM.ConsoleUI
             switch (opcion)
             {
                 case "1":
-                    ProjectApprovalUtils.ProcessApproval(_context, projectId, true, step.StepOrder, userId);
-                    Console.WriteLine("Solicitud aprobada correctamente.");
-                    break;
                 case "2":
-                    ProjectApprovalUtils.ProcessApproval(_context, projectId, false, step.StepOrder, userId);
-                    Console.WriteLine("Solicitud rechazada.");
+                    Console.Write("Ingrese observaciones (opcional): ");
+                    string observaciones = Console.ReadLine() ?? "";
+
+                    bool aprobado = opcion == "1";
+                    ProjectApprovalUtils.ProcessApproval(_context, projectId, aprobado, step.StepOrder, userId, observaciones);
+
+                    Console.WriteLine(aprobado ? "Solicitud aprobada correctamente." : "Solicitud rechazada.");
                     break;
                 case "3":
                     break;

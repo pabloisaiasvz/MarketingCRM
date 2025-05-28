@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35818.85
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarketingCRM", "MarketingCRM\MarketingCRM.csproj", "{76C0F4EB-96CE-4B70-9F66-EF6198CE03F6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectApprovalSystem", "MarketingCRM\ProjectApprovalSystem.csproj", "{76C0F4EB-96CE-4B70-9F66-EF6198CE03F6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectApprovalAPI", "ProjectApprovalAPI\ProjectApprovalAPI.csproj", "{4DFAA899-0F01-521B-0620-F1ED24A42D68}"
 EndProject

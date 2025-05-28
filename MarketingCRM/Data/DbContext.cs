@@ -1,9 +1,9 @@
-﻿using MarketingCRM.Models;
+﻿using ProjectApprovalSystem.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 
-namespace MarketingCRM.Data
+namespace ProjectApprovalSystem.Data
 {
     public class ProjectApprovalDbContext : DbContext
     {
